@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Leigh Household Butler Book</title>
+<meta name="description" content="A complete household operations manual prepared for the Leigh family.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --navy-deep: #0D1B2A;
+  --navy: #1F3864;
+  --navy-soft: #2A4574;
+  --gold: #BF9000;
+  --gold-light: #D4AB3A;
+  --gold-soft: rgba(191, 144, 0, 0.15);
+  --cream: #F4F1EA;
+  --paper: #FAF8F3;
+  --ink: #1A1B23;
+  --ink-soft: #4A4D5C;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--navy-deep);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+}
+
+/* Subtle paper-grain background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(191, 144, 0, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(31, 56, 100, 0.5) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.008) 2px,
+      rgba(255, 255, 255, 0.008) 4px
+    );
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+.container {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+/* Gold frame */
+.frame {
+  position: fixed;
+  inset: 1.5rem;
+  border: 1px solid rgba(191, 144, 0, 0.4);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.frame::before, .frame::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--gold);
+  border-style: solid;
+}
+
+.frame::before {
+  top: -2px; left: -2px;
+  border-width: 2px 0 0 2px;
+}
+
+.frame::after {
+  bottom: -2px; right: -2px;
+  border-width: 0 2px 2px 0;
+}
+
+.corners {
+  position: fixed;
+  inset: 1.5rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.corners::before, .corners::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--gold);
+  border-style: solid;
+}
+
+.corners::before {
+  top: -2px; right: -2px;
+  border-width: 2px 2px 0 0;
+}
+
+.corners::after {
+  bottom: -2px; left: -2px;
+  border-width: 0 0 2px 2px;
+}
+
+.eyebrow {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.3s forwards;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.5s forwards;
+}
+
+.title em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--gold-light);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+  width: 100%;
+  max-width: 24rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.7s forwards;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+}
+
+.divider-diamond {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  margin: 0 1rem;
+}
+
+.subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  color: var(--cream);
+  opacity: 0.85;
+  max-width: 36rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.9s forwards;
+}
+
+.subtitle.shown { opacity: 0.85; }
+
+.byline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  color: rgba(244, 241, 234, 0.5);
+  text-transform: uppercase;
+  margin: 2rem 0 3rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.1s forwards;
+}
+
+.byline .dot {
+  display: inline-block;
+  margin: 0 0.8rem;
+  color: var(--gold);
+}
+
+.cta-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.3s forwards;
+}
+
+.read-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.1rem 2.5rem;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.read-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: translateX(-101%);
+  transition: transform 0.4s ease;
+  z-index: -1;
+}
+
+.read-button:hover {
+  color: var(--navy-deep);
+  border-color: var(--gold);
+}
+
+.read-button:hover::before {
+  transform: translateX(0);
+}
+
+.read-button .arrow {
+  display: inline-block;
+  transition: transform 0.4s ease;
+}
+
+.read-button:hover .arrow {
+  transform: translateX(4px);
+}
+
+.download-link {
+  color: rgba(244, 241, 234, 0.5);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.download-link:hover {
+  color: var(--gold-light);
+}
+
+.stats {
+  display: flex;
+  gap: 3rem;
+  margin-top: 4rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.5s forwards;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: var(--gold-light);
+  line-height: 1;
+}
+
+.stat-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: rgba(244, 241, 234, 0.5);
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+
+.footer {
+  position: fixed;
+  bottom: 2.5rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(244, 241, 234, 0.35);
+  z-index: 3;
+  letter-spacing: 0.05em;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats { gap: 1.5rem; margin-top: 2.5rem; }
+  .stat-value { font-size: 2rem; }
+  .stat-label { font-size: 0.55rem; }
+  .frame, .corners { inset: 0.8rem; }
+  .footer { font-size: 0.75rem; bottom: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="frame"></div>
+<div class="corners"></div>
+
+<main class="container">
+  <div class="eyebrow">The International Butler Academy</div>
+
+  <h1 class="title">The Leigh<br><em>Household</em></h1>
+
+  <div class="divider" aria-hidden="true">
+    <span class="divider-line"></span>
+    <span class="divider-diamond"></span>
+    <span class="divider-line"></span>
+  </div>
+
+  <p class="subtitle">A complete household operations manual prepared for the Leigh family, across three residences in two countries.</p>
+
+  <div class="byline">
+    Mr. Cline<span class="dot">◆</span>2026
+  </div>
+
+  <div class="cta-group">
+    <a class="read-button" href="reader.html">
+      Begin Reading
+      <span class="arrow">→</span>
+    </a>
+    <a class="download-link" href="Leigh_Butler_Book.epub" download>or download the EPUB</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">218</div>
+      <div class="stat-label">Pages</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">6</div>
+      <div class="stat-label">Chapters</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">37</div>
+      <div class="stat-label">Illustrations</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">14</div>
+      <div class="stat-label">SOPs</div>
+    </div>
+  </div>
+</main>
+
+<div class="footer">Strictly Confidential</div>
+
+</body>
+</html>
