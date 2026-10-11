@@ -1,6 +1,12 @@
-# The Leigh Household Butler Book — Web Reader
+# The Leigh Household Butler Book - Web Reader
 
 A self-hosted EPUB reader for the Leigh Household butler book, designed for GitHub Pages.
+
+## About the book, and how it was written
+
+The Leigh Household Butler Book is my capstone project for The International Butler Academy (February to April 2026): a 218-page operations manual for a fictional family across three residences, with 14 standard operating procedures and 37 illustrations. The Leigh family, their homes, staff and vendors are invented for the exercise.
+
+I wrote it with AI tools, and the book says so in its own front matter. I set the household, the structure and the standards, fed in my course notes and research, and used AI to draft, format and illustrate sections, which I then checked and edited. The web reader in this repository was built the same way. The judgment is mine; much of the typing was not.
 
 ## What's in this folder
 
@@ -16,7 +22,7 @@ No build step. No npm. Just three files that work straight on GitHub Pages.
 
 ## Quick deploy to GitHub Pages
 
-### Option A — Brand new repo for this book
+### Option A - Brand new repo for this book
 
 1. Create a new repo on GitHub (e.g. `leigh-butler-book`). Public visibility.
 2. Drag-and-drop all the files in this folder into the repo (or `git push` them to `main`).
@@ -29,7 +35,7 @@ No build step. No npm. Just three files that work straight on GitHub Pages.
 https://YOUR-USERNAME.github.io/leigh-butler-book/
 ```
 
-### Option B — Add to an existing GitHub Pages site
+### Option B - Add to an existing GitHub Pages site
 
 If you already have a `username.github.io` repo:
 
@@ -43,8 +49,8 @@ If you already have a `username.github.io` repo:
 The reader includes:
 
 - **Paginated layout** with prev/next arrows (or keyboard arrows / mobile swipe)
-- **Table of contents sidebar** — every chapter and section linked
-- **Adjustable font size** (70%–200%)
+- **Table of contents sidebar** - every chapter and section linked
+- **Adjustable font size** (70%-200%)
 - **Light and dark themes** (toggle saved per device)
 - **Reading position memory** (resumes where you left off)
 - **Progress bar** at the bottom
@@ -68,14 +74,14 @@ If you regenerate `Leigh_Butler_Book.epub`, just replace the file in the repo an
 
 ## How it works (briefly)
 
-The reader is `reader.html` — a single static HTML file that loads `epub.js` from the jsDelivr CDN and `jszip` from cdnjs. When the page opens, it fetches `Leigh_Butler_Book.epub` from the same folder via an HTTP request, parses it client-side, and renders it. Reading position is stored in `localStorage` per browser.
+The reader is `reader.html` - a single static HTML file that loads `epub.js` from the jsDelivr CDN and `jszip` from cdnjs. When the page opens, it fetches `Leigh_Butler_Book.epub` from the same folder via an HTTP request, parses it client-side, and renders it. Reading position is stored in `localStorage` per browser.
 
-Because everything runs in the browser, no server logic is needed — perfect for GitHub Pages.
+Because everything runs in the browser, no server logic is needed - perfect for GitHub Pages.
 
 ## License & confidentiality
 
-This is an academic project prepared for The International Butler Academy. Don't share publicly without permission from the Leigh household.
+This is an academic project prepared for The International Butler Academy. The household is fictional; nothing here describes a real family.
 
 ---
 
-*Prepared by Mr. Cline, 2026.*
+*Prepared by Garreth Cline, 2026.*
