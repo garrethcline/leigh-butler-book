@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/pdfjs/pdf_viewer.css?v=5">
+<link rel="stylesheet" href="lib/pdfjs/pdf_viewer.css?v=6">
 
 <style>
 :root {
@@ -250,7 +250,7 @@ import * as pdfjsLib from './lib/pdfjs/pdf.min.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.min.mjs';
 globalThis.pdfjsLib = pdfjsLib;   // the viewer module reads it from here
 
-const PDF_URL = 'Leigh_Butler_Book.pdf?v=5';
+const PDF_URL = 'Leigh_Butler_Book.pdf?v=6';
 const PAGE_KEY = 'leigh-pdf-page';
 const isPhone = () => window.innerWidth < 720;
 const fitValue = () => isPhone() ? 'page-width' : 'page-fit';
