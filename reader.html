@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/pdfjs/pdf_viewer.css?v=4">
+<link rel="stylesheet" href="lib/pdfjs/pdf_viewer.css?v=5">
 
 <style>
 :root {
@@ -250,7 +250,7 @@ import * as pdfjsLib from './lib/pdfjs/pdf.min.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdfjs/pdf.worker.min.mjs';
 globalThis.pdfjsLib = pdfjsLib;   // the viewer module reads it from here
 
-const PDF_URL = 'Leigh_Butler_Book.pdf?v=4';
+const PDF_URL = 'Leigh_Butler_Book.pdf?v=5';
 const PAGE_KEY = 'leigh-pdf-page';
 const isPhone = () => window.innerWidth < 720;
 const fitValue = () => isPhone() ? 'page-width' : 'page-fit';
@@ -263,7 +263,9 @@ let pageTexts = null;     // per-page text for search, built on first search
 
 // Printed page numbers: page 1 of the PDF is the cover, so the book's own
 // numbering (in the footers and contents) is one less.
-const printed = n => n <= 1 ? 'Cover' : String(n - 1);
+let pageLabels = null;  // printed page numbers from the PDF: Cover, i–vi, then 1…
+const printed = n => (pageLabels && pageLabels[n - 1]) || (n <= 1 ? 'Cover' : String(n - 1));
+let bodyPages = 0;
 
 async function start() {
   const { PDFViewer, EventBus, PDFLinkService, PDFFindController } = await import('./lib/pdfjs/pdf_viewer.mjs');
@@ -298,6 +300,8 @@ async function start() {
       '<div>Please refresh the page, or open the PDF directly.</div><a class="btn" href="Leigh_Butler_Book.pdf">Open the PDF</a>';
     return;
   }
+  try { pageLabels = await pdfDoc.getPageLabels(); } catch (e) { pageLabels = null; }
+  bodyPages = pageLabels ? pageLabels.filter(l => /^\d+$/.test(l)).length : pdfDoc.numPages - 1;
   viewer.setDocument(pdfDoc);
   linkService.setDocument(pdfDoc, null);
   buildContents();
@@ -306,7 +310,8 @@ async function start() {
 // ---------- page / progress ----------
 function updatePage(n) {
   if (!pdfDoc) return;
-  $('page-text').textContent = n <= 1 ? `Cover · ${pdfDoc.numPages - 1} pp` : `Page ${n - 1} of ${pdfDoc.numPages - 1}`;
+  const lab = printed(n);
+  $('page-text').textContent = n <= 1 ? `Cover · ${pdfDoc.numPages} pages` : (/^\d+$/.test(lab) ? `Page ${lab} of ${bodyPages}` : `Page ${lab}`);
   $('progress-bar').style.width = Math.round(100 * (n - 1) / Math.max(1, pdfDoc.numPages - 1)) + '%';
   localStorage.setItem(PAGE_KEY, n);
   let ch = null;
@@ -422,7 +427,7 @@ async function loadTexts(run) {
     const page = await pdfDoc.getPage(i);
     const tc = await page.getTextContent();
     texts.push(tc.items.map(it => it.str + (it.hasEOL ? ' ' : '')).join('').replace(/\s+/g, ' ')
-      .replace(/\s*The Leigh Household Butler Book\s*\d*\s*$/, ''));
+      .replace(/\s*(Chapter \d+:[^]*?)?The Leigh Household Butler Book\s*\S*\s*$/, '').replace(/\s+[ivx\d]+\s*$/, ''));
     if (i % 20 === 0) $('search-status').textContent = `Reading the book… ${Math.round(100 * i / pdfDoc.numPages)}%`;
   }
   pageTexts = texts;

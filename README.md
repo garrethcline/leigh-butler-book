@@ -13,7 +13,7 @@ I wrote the book with AI tools, and the book says so in its front matter. I set 
 - `index.html`: the landing page.
 - `reader.html`: the page view. It shows `Leigh_Butler_Book.pdf` with PDF.js (included in `lib/pdfjs`, Apache 2.0 license), with zoom, search, a clickable contents list, and it remembers where you stopped.
 - `text.html`: the text view. It opens the EPUB with epub.js and JSZip (loaded from public CDNs) and reflows the text to fit the screen.
-- `Leigh_Butler_Book.pdf`: the book laid out on US Letter pages, made from the EPUB.
+- `Leigh_Butler_Book.pdf`: the book as a 220-page US Letter PDF (cover, front matter numbered i–vi, chapters numbered 1–213), set in Garamond with 1-inch margins, running headers, and clickable contents and index links.
 - `Leigh_Butler_Book.epub`: the book.
 
 To run it on your own computer, serve the folder with any static web server (for example `python -m http.server`) and open `index.html`. Opening the files directly may not work, because the readers fetch the book over HTTP.
