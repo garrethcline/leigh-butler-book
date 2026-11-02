@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Reading · The Leigh Household</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,6 +29,7 @@
   --chrome-fg: var(--navy);
   --chrome-rule: rgba(31, 56, 100, 0.15);
   --sidebar-bg: var(--cream);
+  --desk: #D9D4C8;
 }
 
 body.theme-dark {
@@ -40,6 +41,7 @@ body.theme-dark {
   --chrome-rule: rgba(212, 171, 58, 0.2);
   --sidebar-bg: #1A1D26;
   --rule: rgba(255, 255, 255, 0.08);
+  --desk: #0A0C11;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -194,6 +196,65 @@ html, body {
   height: 100%;
 }
 
+/* --- Page view: the book laid out like printed pages, scaled to fit --- */
+body.mode-page .reader-stage { background: var(--desk); touch-action: none; }
+.page-scroller {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+}
+body.mode-page .page-scroller.zoomed { overflow: auto; -webkit-overflow-scrolling: touch; }
+body.mode-page .page-scroller { bottom: 58px; }   /* strip for the zoom control */
+.page-sizer {
+  position: relative;
+  margin: auto;            /* centers when smaller than the stage */
+  flex: none;
+}
+.page-frame {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  background: var(--bg);
+}
+body.mode-page .page-frame { box-shadow: 0 4px 24px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06); }
+body.mode-flow .page-frame { position: absolute; inset: 0; width: 100% !important; height: 100% !important; transform: none !important; }
+body.mode-flow .page-sizer { position: absolute; inset: 0; margin: 0; width: 100% !important; height: 100% !important; }
+
+/* Zoom control (page view) */
+.zoombar {
+  position: absolute;
+  bottom: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-rule);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  z-index: 25;
+}
+body.mode-flow .zoombar { display: none; }
+.zoombar button {
+  min-width: 40px; height: 36px;
+  padding: 0 0.6rem;
+  border: none; background: transparent;
+  color: var(--chrome-fg);
+  font-family: 'Inter', sans-serif; font-size: 1.15rem; font-weight: 500;
+  border-radius: 999px; cursor: pointer;
+}
+.zoombar button:hover { background: rgba(191,144,0,0.15); }
+.zoombar .zoom-level { font-size: 0.75rem; letter-spacing: 0.05em; min-width: 58px; }
+
+/* View switch inside the menu */
+.view-switch { display: flex; gap: 0.5rem; }
+.view-switch .font-btn { font-family: 'Inter', sans-serif; font-size: 0.8rem; }
+.view-switch .font-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+body.mode-page .flow-only { display: none !important; }
+
 /* Loading state */
 .loading {
   position: absolute;
@@ -263,6 +324,7 @@ html, body {
 }
 
 .nav-arrow.prev { left: 12px; }
+body.mode-page .nav-arrow { opacity: 0.85; background: var(--chrome-bg); }
 .nav-arrow.next { right: 12px; }
 
 .nav-arrow svg { width: 20px; height: 20px; }
@@ -460,7 +522,9 @@ html, body {
   .sidebar { top: 56px; bottom: 46px; width: 85%; max-width: 320px; }
   .brand { font-size: 0.95rem; }
   .chapter-label { display: none; }
-  .nav-arrow { display: none; }  /* rely on swipe */
+  .nav-arrow { display: none; }  /* swipe or tap the page edges */
+  .zoombar { bottom: 8px; }
+  .font-menu { right: 0.5rem; left: 0.5rem; }
   .progress-text { font-size: 0.65rem; min-width: 50px; }
 }
 </style>
@@ -475,7 +539,7 @@ html, body {
 
   <div class="brand"><em>The Leigh</em><span class="accent">◆</span><em>Household</em></div>
 
-  <button class="icon-btn" id="font-toggle" aria-label="Text size">
+  <button class="icon-btn" id="font-toggle" aria-label="View and text size">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
   </button>
   <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
@@ -494,8 +558,13 @@ html, body {
 
 <!-- FONT MENU -->
 <div class="font-menu" id="font-menu">
-  <div class="font-menu-label">Text Size</div>
-  <div class="font-controls">
+  <div class="font-menu-label">View</div>
+  <div class="view-switch">
+    <button class="font-btn" id="view-page">Page view</button>
+    <button class="font-btn" id="view-flow">Text view</button>
+  </div>
+  <div class="font-menu-label flow-only">Text Size</div>
+  <div class="font-controls flow-only">
     <button class="font-btn small" id="font-down">A</button>
     <span class="font-size-display" id="font-size-display">100%</span>
     <button class="font-btn large" id="font-up">A</button>
@@ -521,7 +590,16 @@ html, body {
   <button class="nav-arrow prev" id="prev" aria-label="Previous page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
   </button>
-  <div id="viewer"></div>
+  <div class="page-scroller" id="scroller">
+    <div class="page-sizer" id="sizer">
+      <div class="page-frame" id="frame"><div id="viewer"></div></div>
+    </div>
+  </div>
+  <div class="zoombar" id="zoombar">
+    <button id="zoom-out" aria-label="Zoom out">&minus;</button>
+    <button class="zoom-level" id="zoom-fit" aria-label="Fit page to screen">Fit</button>
+    <button id="zoom-in" aria-label="Zoom in">+</button>
+  </div>
   <button class="nav-arrow next" id="next" aria-label="Next page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
   </button>
@@ -546,6 +624,20 @@ const FONT_SIZE_KEY = 'leigh-book-fontsize';
 const THEME_KEY = 'leigh-book-theme';
 
 let book, rendition, currentFontSize, currentTheme;
+const MODE_KEY = 'leigh-book-mode';
+let mode = localStorage.getItem(MODE_KEY) || 'page';
+
+// Printed book page: US Letter (8.5 x 11 in) at 96 px per inch
+const PAGE_W = 816, PAGE_H = 1056, PAGE_GAP = 120;   // 0.625 in side margins
+let twoUp = false;      // two-page spread on wide screens
+let fitScale = 1;       // scale that fits the whole page(s) on screen
+let zoom = 1;           // multiplier on top of fit (1 = fit)
+const ZOOM_MIN = 1, ZOOM_MAX = 5;
+
+const stage = document.querySelector('.reader-stage');
+const scroller = document.getElementById('scroller');
+const sizer = document.getElementById('sizer');
+const frame = document.getElementById('frame');
 
 // Initialize theme from storage
 function initTheme() {
@@ -553,40 +645,134 @@ function initTheme() {
   document.body.classList.toggle('theme-dark', currentTheme === 'dark');
 }
 initTheme();
-
-// Initialize font size
 currentFontSize = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '100');
+
+function setModeClass() {
+  document.body.classList.toggle('mode-page', mode === 'page');
+  document.body.classList.toggle('mode-flow', mode === 'flow');
+  document.getElementById('view-page').classList.toggle('active', mode === 'page');
+  document.getElementById('view-flow').classList.toggle('active', mode === 'flow');
+}
+setModeClass();
+
+// ---------- Page geometry ----------
+function pageSize() {
+  return { w: twoUp ? PAGE_W * 2 : PAGE_W, h: PAGE_H };
+}
+
+function computeLayout() {
+  const sw = scroller.clientWidth, sh = scroller.clientHeight;
+  const pad = sw < 720 ? 8 : 24;
+  // Two pages side by side only when that still leaves them readable
+  const twoFit = Math.min((sw - pad * 2) / (PAGE_W * 2), (sh - pad * 2) / PAGE_H);
+  twoUp = sw >= 1100 && twoFit >= 0.5;
+  const p = pageSize();
+  fitScale = Math.min((sw - pad * 2) / p.w, (sh - pad * 2) / p.h);
+}
+
+function applyZoom(anchorX, anchorY) {
+  if (mode !== 'page') return;
+  const p = pageSize();
+  const oldW = sizer.offsetWidth || 1, oldH = sizer.offsetHeight || 1;
+  // keep the point under the finger/cursor in place while zooming
+  const ax = anchorX ?? scroller.clientWidth / 2, ay = anchorY ?? scroller.clientHeight / 2;
+  const relX = (scroller.scrollLeft + ax - sizer.offsetLeft) / oldW;
+  const relY = (scroller.scrollTop + ay - sizer.offsetTop) / oldH;
+
+  const s = fitScale * zoom;
+  frame.style.width = p.w + 'px';
+  frame.style.height = p.h + 'px';
+  frame.style.transform = `scale(${s})`;
+  sizer.style.width = Math.round(p.w * s) + 'px';
+  sizer.style.height = Math.round(p.h * s) + 'px';
+  scroller.classList.toggle('zoomed', zoom > 1.001);
+
+  if (zoom > 1.001) {
+    scroller.scrollLeft = relX * sizer.offsetWidth + sizer.offsetLeft - ax;
+    scroller.scrollTop = relY * sizer.offsetHeight + sizer.offsetTop - ay;
+  } else {
+    scroller.scrollLeft = 0; scroller.scrollTop = 0;
+  }
+  const btn = document.getElementById('zoom-fit');
+  btn.textContent = zoom > 1.001 ? Math.round(s * 100) + '%' : 'Fit';
+}
+
+function setZoom(z, ax, ay) {
+  zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+  applyZoom(ax, ay);
+}
+
+// epub.js works out pages and locations from on-screen sizes. Page view scales
+// the page with a CSS transform, so report sizes inside the page frame as if
+// unscaled; otherwise progress, saved position and contents links drift.
+const _gbcr = Element.prototype.getBoundingClientRect;
+Element.prototype.getBoundingClientRect = function () {
+  const r = _gbcr.call(this);
+  if (mode !== 'page' || this === frame || !frame.contains(this)) return r;
+  const k = fitScale * zoom;
+  if (Math.abs(k - 1) < 1e-6) return r;
+  const o = _gbcr.call(frame);
+  return new DOMRect(o.left + (r.left - o.left) / k, o.top + (r.top - o.top) / k, r.width / k, r.height / k);
+};
+
+// ---------- Rendition ----------
+async function createRendition(target) {
+  if (rendition) { rendition.destroy(); rendition = null; }
+  document.getElementById('viewer').innerHTML = '';
+
+  if (mode === 'page') {
+    computeLayout();
+    const p = pageSize();
+    frame.style.width = p.w + 'px';
+    frame.style.height = p.h + 'px';
+    rendition = book.renderTo('viewer', {
+      width: p.w, height: p.h,
+      flow: 'paginated',
+      spread: twoUp ? 'always' : 'none',
+      gap: PAGE_GAP,
+      allowScriptedContent: true,
+    });
+    applyZoom();
+  } else {
+    frame.style.width = ''; frame.style.height = ''; frame.style.transform = '';
+    rendition = book.renderTo('viewer', {
+      width: '100%', height: '100%',
+      flow: 'paginated', spread: 'auto', minSpreadWidth: 900,
+      allowScriptedContent: true,
+    });
+  }
+
+  // Print-like page margins and steady layout in page view
+  rendition.themes.default({
+    'img': { 'max-width': '100% !important', 'height': 'auto' },
+    'table': { 'max-width': '100%' },
+  });
+  if (mode === 'page') {
+    rendition.themes.override('font-size', '100%');
+    rendition.themes.default({
+      'body': { 'padding-top': '56px !important', 'padding-bottom': '56px !important', 'font-size': '17px' },
+      'html': { 'touch-action': 'none' },
+    });
+  } else {
+    applyFontSize();
+  }
+  applyTheme();
+
+  rendition.hooks.content.register(attachTouch);
+  rendition.on('relocated', onRelocated);
+  rendition.on('rendered', updateChapterLabel);
+  rendition.on('keyup', onKey);
+
+  await rendition.display(target || undefined);
+}
 
 async function loadBook() {
   try {
     book = ePub('Leigh_Butler_Book.epub');
-
-    rendition = book.renderTo('viewer', {
-      width: '100%',
-      height: '100%',
-      flow: 'paginated',
-      spread: 'auto',
-      minSpreadWidth: 900,
-      allowScriptedContent: true,
-    });
-
-    applyTheme();
-    applyFontSize();
-
-    // Restore reading position
-    const savedCfi = localStorage.getItem(STORAGE_KEY);
-    await rendition.display(savedCfi || undefined);
-
-    // Build TOC after book is ready
     await book.ready;
+    await createRendition(localStorage.getItem(STORAGE_KEY));
     buildTOC();
-
-    // Hook events
-    rendition.on('rendered', updateChapterLabel);
-    rendition.on('relocated', onRelocated);
-
     document.getElementById('loading').classList.add('hidden');
-
   } catch (err) {
     console.error('Failed to load book:', err);
     document.getElementById('loading').classList.add('hidden');
@@ -594,6 +780,23 @@ async function loadBook() {
     document.getElementById('error-text').textContent =
       'Error: ' + (err.message || 'Could not load the EPUB file. Try downloading it directly.');
   }
+}
+
+function currentCfi() {
+  const loc = rendition && rendition.currentLocation();
+  return loc && loc.start ? loc.start.cfi : localStorage.getItem(STORAGE_KEY);
+}
+
+async function switchMode(newMode) {
+  if (newMode === mode) return;
+  const cfi = currentCfi();
+  mode = newMode;
+  localStorage.setItem(MODE_KEY, mode);
+  zoom = 1;
+  setModeClass();
+  await createRendition(cfi);
+  const loc = rendition.currentLocation();
+  if (loc) onRelocated(loc);
 }
 
 function applyTheme() {
@@ -608,9 +811,9 @@ function applyTheme() {
 }
 
 function applyFontSize() {
-  if (!rendition) return;
-  rendition.themes.fontSize(currentFontSize + '%');
   document.getElementById('font-size-display').textContent = currentFontSize + '%';
+  if (!rendition || mode !== 'flow') return;
+  rendition.themes.fontSize(currentFontSize + '%');
 }
 
 function buildTOC() {
@@ -630,7 +833,6 @@ function buildTOC() {
       a.addEventListener('click', (e) => {
         e.preventDefault();
         rendition.display(item.href);
-        // Close sidebar on mobile
         if (window.innerWidth < 720) {
           document.getElementById('sidebar').classList.remove('open');
         }
@@ -658,7 +860,6 @@ function updateChapterLabel() {
     const navItem = book.navigation.get(item.href);
     if (navItem) {
       document.getElementById('chapter-label').textContent = navItem.label.trim();
-      // Highlight current in TOC
       document.querySelectorAll('.toc-list a').forEach(a => a.classList.remove('current'));
       const currentLink = document.querySelector(`.toc-list a[data-href="${item.href}"]`);
       if (currentLink) currentLink.classList.add('current');
@@ -667,11 +868,10 @@ function updateChapterLabel() {
 }
 
 function onRelocated(location) {
-  // Save position
   if (location && location.start) {
     localStorage.setItem(STORAGE_KEY, location.start.cfi);
   }
-  // Update progress
+  updateChapterLabel();
   if (location && book.locations && book.locations.length()) {
     const percent = book.locations.percentageFromCfi(location.start.cfi);
     const pct = Math.round(percent * 100);
@@ -680,19 +880,143 @@ function onRelocated(location) {
   }
 }
 
-// Generate locations for progress (runs async after load)
 async function generateLocations() {
   if (!book) return;
   await book.ready;
   await book.locations.generate(1000);
-  // Trigger update for current position
   const loc = rendition.currentLocation();
   if (loc) onRelocated(loc);
 }
 
-// === EVENT HANDLERS ===
-document.getElementById('prev').addEventListener('click', () => rendition && rendition.prev());
-document.getElementById('next').addEventListener('click', () => rendition && rendition.next());
+// ---------- Page turning ----------
+// After each turn, ask epub.js to re-report the location so progress and the
+// saved reading position stay in step with what is on screen.
+function turn(dir) {
+  if (!rendition) return;
+  const p = dir > 0 ? rendition.next() : rendition.prev();
+  Promise.resolve(p).then(() => setTimeout(() => {
+    const loc = rendition.currentLocation();
+    if (loc && loc.start) onRelocated(loc);
+  }, 60));
+  if (mode === 'page' && zoom > 1.001) scroller.scrollTop = 0;
+}
+function next() { turn(1); }
+function prev() { turn(-1); }
+
+// ---------- Touch: swipe, tap edges, double-tap, pinch, pan ----------
+// Touches inside the book land in the epub iframe, so listeners are attached
+// there (coordinates converted to screen space) as well as on the stage.
+let t = null, lastTap = 0, tapTimer = null;
+
+function scaleNow() { return mode === 'page' ? fitScale * zoom : 1; }
+
+function handleStart(pts) {
+  if (pts.length === 2) {
+    t = { pinch: true, d0: dist(pts), z0: zoom, mid: mid(pts) };
+  } else if (pts.length === 1) {
+    t = { pinch: false, x0: pts[0].x, y0: pts[0].y, x: pts[0].x, y: pts[0].y,
+          sl: scroller.scrollLeft, st: scroller.scrollTop, time: Date.now() };
+  }
+}
+function handleMove(pts, ev) {
+  if (!t) return;
+  if (t.pinch && pts.length === 2 && mode === 'page') {
+    ev.preventDefault();
+    const r = scroller.getBoundingClientRect();
+    setZoom(t.z0 * dist(pts) / t.d0, t.mid.x - r.left, t.mid.y - r.top);
+  } else if (!t.pinch && pts.length === 1) {
+    t.x = pts[0].x; t.y = pts[0].y;
+    if (mode === 'page' && zoom > 1.001) {          // pan the zoomed page
+      ev.preventDefault();
+      scroller.scrollLeft = t.sl - (t.x - t.x0);
+      scroller.scrollTop = t.st - (t.y - t.y0);
+    }
+  }
+}
+function handleEnd(pts) {
+  if (!t) return;
+  const s = t; t = null;
+  if (s.pinch) return;
+  const dx = s.x - s.x0, dy = s.y - s.y0;
+  const zoomedIn = mode === 'page' && zoom > 1.001;
+
+  // Swipe to turn pages (when not zoomed in)
+  if (!zoomedIn && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+    dx > 0 ? prev() : next();
+    return;
+  }
+  // Tap / double-tap
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && Date.now() - s.time < 300) {
+    const now = Date.now();
+    if (mode === 'page' && now - lastTap < 300) {        // double-tap: toggle zoom
+      clearTimeout(tapTimer); lastTap = 0;
+      const r = scroller.getBoundingClientRect();
+      setZoom(zoomedIn ? 1 : 2.2, s.x - r.left, s.y - r.top);
+      return;
+    }
+    lastTap = now;
+    if (zoomedIn) return;
+    const w = stage.clientWidth, rx = s.x - stage.getBoundingClientRect().left;
+    tapTimer = setTimeout(() => {                         // tap page edges to turn
+      if (rx < w * 0.22) prev();
+      else if (rx > w * 0.78) next();
+    }, mode === 'page' ? 300 : 0);
+  }
+}
+const dist = p => Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+const mid = p => ({ x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 });
+
+// Points from the stage (already screen coordinates)
+const stagePts = e => Array.from(e.touches.length ? e.touches : e.changedTouches)
+  .map(p => ({ x: p.clientX, y: p.clientY }));
+stage.addEventListener('touchstart', e => { if (!e.target.closest('.zoombar,.nav-arrow')) handleStart(stagePts(e)); }, { passive: true });
+stage.addEventListener('touchmove', e => handleMove(stagePts(e), e), { passive: false });
+stage.addEventListener('touchend', e => handleEnd(stagePts(e)), { passive: true });
+
+// Points from inside the epub iframe: convert iframe coords to screen coords
+function attachTouch(contents) {
+  const doc = contents.document;
+  const win = contents.window;
+  // epub.js lays every page of a chapter in one wide strip and shifts it, so map
+  // touches against the visible page box rather than the iframe itself.
+  const toScreen = e => {
+    const r = frame.getBoundingClientRect();
+    const W = frame.offsetWidth || 1;
+    const k = r.width / W || 1;                       // CSS scale applied to the page
+    return Array.from(e.touches.length ? e.touches : e.changedTouches)
+      .map(p => ({ x: r.left + (((p.clientX % W) + W) % W) * k, y: r.top + p.clientY * k }));
+  };
+  doc.addEventListener('touchstart', e => handleStart(toScreen(e)), { passive: true });
+  doc.addEventListener('touchmove', e => handleMove(toScreen(e), e), { passive: false });
+  doc.addEventListener('touchend', e => handleEnd(toScreen(e)), { passive: true });
+  doc.addEventListener('gesturestart', e => e.preventDefault());
+  // Ctrl/Cmd + wheel (and trackpad pinch) zooms the page on desktop
+  doc.addEventListener('wheel', e => {
+    if (mode === 'page' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      const r = scroller.getBoundingClientRect();
+      const pt = toScreen({ touches: [], changedTouches: [e] })[0];
+      setZoom(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), pt.x - r.left, pt.y - r.top);
+    }
+  }, { passive: false });
+}
+document.addEventListener('gesturestart', e => e.preventDefault());
+stage.addEventListener('wheel', e => {
+  if (mode === 'page' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    const r = scroller.getBoundingClientRect();
+    setZoom(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX - r.left, e.clientY - r.top);
+  }
+}, { passive: false });
+
+// ---------- Buttons ----------
+document.getElementById('prev').addEventListener('click', prev);
+document.getElementById('next').addEventListener('click', next);
+document.getElementById('zoom-in').addEventListener('click', () => setZoom(zoom * 1.25));
+document.getElementById('zoom-out').addEventListener('click', () => setZoom(zoom / 1.25));
+document.getElementById('zoom-fit').addEventListener('click', () => setZoom(1));
+document.getElementById('view-page').addEventListener('click', () => switchMode('page'));
+document.getElementById('view-flow').addEventListener('click', () => switchMode('flow'));
 
 document.getElementById('toc-toggle').addEventListener('click', (e) => {
   e.stopPropagation();
@@ -723,7 +1047,6 @@ document.getElementById('font-down').addEventListener('click', () => {
   applyFontSize();
 });
 
-// Close menus on outside click
 document.addEventListener('click', (e) => {
   const sidebar = document.getElementById('sidebar');
   const fontMenu = document.getElementById('font-menu');
@@ -735,39 +1058,36 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Keyboard navigation
-document.addEventListener('keydown', (e) => {
+// ---------- Keyboard ----------
+function onKey(e) {
   if (!rendition) return;
-  if (e.key === 'ArrowLeft') { rendition.prev(); e.preventDefault(); }
-  else if (e.key === 'ArrowRight') { rendition.next(); e.preventDefault(); }
+  if (e.key === 'ArrowLeft') { prev(); e.preventDefault && e.preventDefault(); }
+  else if (e.key === 'ArrowRight') { next(); e.preventDefault && e.preventDefault(); }
+  else if (mode === 'page' && (e.key === '+' || e.key === '=')) setZoom(zoom * 1.25);
+  else if (mode === 'page' && (e.key === '-' || e.key === '_')) setZoom(zoom / 1.25);
+  else if (mode === 'page' && e.key === '0') setZoom(1);
   else if (e.key === 'Escape') {
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('font-menu').classList.remove('open');
   }
+}
+document.addEventListener('keydown', onKey);
+
+// ---------- Resize / rotate ----------
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(async () => {
+    if (!rendition || mode !== 'page') return;
+    const wasTwoUp = twoUp;
+    computeLayout();
+    if (twoUp !== wasTwoUp) { await createRendition(currentCfi()); }
+    else applyZoom();
+  }, 200);
 });
-
-// Touch swipe for mobile
-let touchStartX = 0;
-let touchStartY = 0;
-document.addEventListener('touchstart', (e) => {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchend', (e) => {
-  if (!rendition) return;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  // Horizontal swipe with minimum distance and mostly horizontal
-  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-    if (dx > 0) rendition.prev();
-    else rendition.next();
-  }
-}, { passive: true });
 
 // === GO ===
 loadBook().then(() => {
-  // After initial load, generate locations for accurate progress
   setTimeout(generateLocations, 500);
 });
 </script>
