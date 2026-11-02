@@ -27,13 +27,14 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100%;
+  min-height: 100%;
   background: var(--navy-deep);
   color: var(--cream);
   font-family: 'Inter', sans-serif;
   font-weight: 300;
   overflow-x: hidden;
 }
+body { position: relative; }
 
 /* Subtle paper-grain background */
 body::before {
@@ -68,6 +69,7 @@ body::after {
   position: relative;
   z-index: 2;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -78,7 +80,7 @@ body::after {
 
 /* Gold frame */
 .frame {
-  position: fixed;
+  position: absolute;
   inset: 1.5rem;
   border: 1px solid rgba(191, 144, 0, 0.4);
   pointer-events: none;
@@ -105,7 +107,7 @@ body::after {
 }
 
 .corners {
-  position: fixed;
+  position: absolute;
   inset: 1.5rem;
   pointer-events: none;
   z-index: 2;
@@ -167,6 +169,7 @@ body::after {
   margin: 2rem 0;
   width: 100%;
   max-width: 24rem;
+  padding: 0 1rem;
   opacity: 0;
   animation: fadeUp 0.8s ease 0.7s forwards;
 }
@@ -321,10 +324,8 @@ body::after {
 }
 
 .footer {
-  position: fixed;
-  bottom: 2.5rem;
-  left: 0;
-  right: 0;
+  position: relative;
+  margin-top: 2.5rem;
   text-align: center;
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
@@ -346,11 +347,33 @@ body::after {
 }
 
 @media (max-width: 640px) {
-  .stats { gap: 1.5rem; margin-top: 2.5rem; }
+  .container { padding: 3rem 2rem 2.75rem; }
+  .eyebrow { letter-spacing: 0.28em; font-size: 0.65rem; margin-bottom: 1.5rem; }
+  .divider { margin: 1.5rem 0; }
+  .byline { margin: 1.5rem 0 2rem; letter-spacing: 0.2em; }
+  .read-button { padding: 1rem 2rem; letter-spacing: 0.25em; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 2.5rem;
+    margin-top: 2.5rem;
+  }
   .stat-value { font-size: 2rem; }
-  .stat-label { font-size: 0.55rem; }
+  .stat-label { font-size: 0.6rem; letter-spacing: 0.2em; }
   .frame, .corners { inset: 0.8rem; }
-  .footer { font-size: 0.75rem; bottom: 1.5rem; }
+  .footer { font-size: 0.8rem; margin-top: 2rem; }
+}
+@media (max-height: 760px) and (max-width: 640px) {
+  .container { padding-top: 2.25rem; padding-bottom: 2.25rem; }
+  .title { font-size: 2.6rem; }
+  .eyebrow { margin-bottom: 1rem; }
+  .divider { margin: 1rem 0; }
+  .subtitle { font-size: 1rem; margin-bottom: 0.5rem; }
+  .byline { margin: 1rem 0 1.25rem; font-size: 0.75rem; }
+  .cta-group { gap: 0.75rem; }
+  .stats { margin-top: 1.5rem; gap: 1rem 2.5rem; }
+  .stat-value { font-size: 1.7rem; }
+  .footer { margin-top: 1.25rem; }
 }
 </style>
 </head>
@@ -377,7 +400,7 @@ body::after {
   </div>
 
   <div class="cta-group">
-    <a class="read-button" href="reader.html">
+    <a class="read-button" href="reader.html?v=3">
       Begin Reading
       <span class="arrow">→</span>
     </a>
@@ -402,9 +425,9 @@ body::after {
       <div class="stat-label">SOPs</div>
     </div>
   </div>
-</main>
 
-<div class="footer">The Leigh family and their homes are fictional.</div>
+  <div class="footer">The Leigh family and their homes are fictional.</div>
+</main>
 
 </body>
 </html>

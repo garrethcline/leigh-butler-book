@@ -80,6 +80,10 @@ html, body {
   color: var(--chrome-fg);
   margin-right: auto;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .brand .accent {
@@ -463,6 +467,101 @@ body.mode-page .nav-arrow { opacity: 0.85; background: var(--chrome-bg); }
   text-align: center;
 }
 
+
+/* === SEARCH PANEL === */
+.search-panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 400px;
+  max-width: 100%;
+  bottom: 50px;
+  background: var(--sidebar-bg);
+  border-left: 1px solid var(--chrome-rule);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 55;
+  box-shadow: -8px 0 30px rgba(0,0,0,0.12);
+}
+.search-panel.open { transform: translateX(0); }
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--chrome-rule);
+}
+.search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;               /* 16px stops iPhones zooming the page on focus */
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--chrome-rule);
+  border-radius: 4px;
+  outline: none;
+}
+.search-input:focus { border-color: var(--gold); }
+.search-go {
+  padding: 0 1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--gold);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.search-status {
+  padding: 0.6rem 1rem;
+  font-size: 0.75rem;
+  color: var(--fg-soft);
+  border-bottom: 1px solid var(--chrome-rule);
+}
+.search-status:empty { display: none; }
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  list-style: none;
+}
+.search-results .group {
+  padding: 0.75rem 1rem 0.35rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gold);
+  position: sticky;
+  top: 0;
+  background: var(--sidebar-bg);
+}
+.search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.search-results button:hover, .search-results button.active { background: rgba(191, 144, 0, 0.12); }
+.search-results mark {
+  background: rgba(191, 144, 0, 0.35);
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
 /* === ERROR STATE === */
 .error-state {
   position: absolute;
@@ -515,12 +614,19 @@ body.mode-page .nav-arrow { opacity: 0.85; background: var(--chrome-bg); }
 }
 
 /* Mobile adjustments */
+@media (max-width: 370px) {
+  .brand em:first-child, .brand .accent { display: none !important; }
+}
 @media (max-width: 720px) {
   .topbar { padding: 0 0.75rem; height: 56px; }
   .bottombar { padding: 0 0.75rem; height: 46px; }
   .reader-stage { top: 56px; bottom: 46px; }
   .sidebar { top: 56px; bottom: 46px; width: 85%; max-width: 320px; }
-  .brand { font-size: 0.95rem; }
+  .brand { font-size: 0.9rem; }
+  .brand .accent { margin: 0 0.3rem; font-size: 0.6em; vertical-align: 0.15em; }
+  .search-panel { top: 56px; bottom: 46px; width: 100%; border-left: none; }
+  .icon-btn { width: 34px; height: 34px; }
+  .topbar { gap: 0.15rem; }
   .chapter-label { display: none; }
   .nav-arrow { display: none; }  /* swipe or tap the page edges */
   .zoombar { bottom: 8px; }
@@ -539,6 +645,9 @@ body.mode-page .nav-arrow { opacity: 0.85; background: var(--chrome-bg); }
 
   <div class="brand"><em>The Leigh</em><span class="accent">◆</span><em>Household</em></div>
 
+  <button class="icon-btn" id="search-toggle" aria-label="Search the book">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+  </button>
   <button class="icon-btn" id="font-toggle" aria-label="View and text size">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
   </button>
@@ -554,6 +663,16 @@ body.mode-page .nav-arrow { opacity: 0.85; background: var(--chrome-bg); }
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-title">Contents</div>
   <nav id="toc"></nav>
+</aside>
+
+<!-- SEARCH -->
+<aside class="search-panel" id="search-panel" aria-label="Search">
+  <form class="search-form" id="search-form" autocomplete="off">
+    <input class="search-input" id="search-input" type="search" placeholder="Search the book" enterkeyhint="search">
+    <button class="search-go" type="submit">Search</button>
+  </form>
+  <div class="search-status" id="search-status"></div>
+  <ul class="search-results" id="search-results"></ul>
 </aside>
 
 <!-- FONT MENU -->
@@ -768,7 +887,7 @@ async function createRendition(target) {
 
 async function loadBook() {
   try {
-    book = ePub('Leigh_Butler_Book.epub');
+    book = ePub('Leigh_Butler_Book.epub?v=3', { openAs: 'epub' });
     await book.ready;
     await createRendition(localStorage.getItem(STORAGE_KEY));
     buildTOC();
@@ -1009,6 +1128,104 @@ stage.addEventListener('wheel', e => {
   }
 }, { passive: false });
 
+
+// ---------- Search ----------
+const searchPanel = document.getElementById('search-panel');
+const searchInput = document.getElementById('search-input');
+const searchStatus = document.getElementById('search-status');
+const searchResults = document.getElementById('search-results');
+let searchRun = 0;
+
+function chapterName(item) {
+  // Label of the top-level contents entry that owns this section
+  const base = item.href.split('#')[0];
+  const hit = (book.navigation.toc || []).find(t => t.href.split('#')[0] === base);
+  return hit ? hit.label.trim() : (item.idref || base);
+}
+
+const escapeHtml = str => str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function markTerm(excerpt, q) {
+  const safe = escapeHtml(excerpt);
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/&/g, '&amp;'), 'gi');
+  return safe.replace(re, m => `<mark>${m}</mark>`);
+}
+
+async function runSearch(q) {
+  q = q.trim();
+  const run = ++searchRun;
+  searchResults.innerHTML = '';
+  if (q.length < 2) { searchStatus.textContent = 'Type at least two letters.'; return; }
+  searchStatus.textContent = 'Searching…';
+  let total = 0;
+  for (const item of book.spine.spineItems) {
+    if (run !== searchRun) return;                 // a newer search started
+    let found = [];
+    try {
+      await item.load(book.load.bind(book));
+      found = item.find(q) || [];
+    } catch (e) { console.warn('search skipped', item.href, e); }
+    finally { try { item.unload(); } catch (e) {} }
+    if (run !== searchRun) return;
+    if (!found.length) continue;
+    total += found.length;
+    const head = document.createElement('li');
+    head.className = 'group';
+    head.textContent = `${chapterName(item)} (${found.length})`;
+    searchResults.appendChild(head);
+    found.slice(0, 150).forEach(r => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      const ex = r.excerpt.trim().replace(/^[.…\s]+|[.…\s]+$/g, '');
+      btn.innerHTML = '…' + markTerm(ex, q) + '…';
+      btn.addEventListener('click', () => goToResult(r.cfi, btn));
+      li.appendChild(btn);
+      searchResults.appendChild(li);
+    });
+    searchStatus.textContent = `${total} match${total === 1 ? '' : 'es'} so far…`;
+  }
+  if (run !== searchRun) return;
+  searchStatus.textContent = total ? `${total} match${total === 1 ? '' : 'es'} for “${q}”` : `No matches for “${q}”`;
+}
+
+async function goToResult(cfi, btn) {
+  searchResults.querySelectorAll('button.active').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (window.innerWidth < 720) searchPanel.classList.remove('open');
+  if (mode === 'page') setZoom(1);
+  await rendition.display(cfi);
+  // Mark the match in gold so it stands out on the page
+  try {
+    const range = rendition.getRange(cfi);
+    const doc = range.startContainer.ownerDocument;
+    doc.querySelectorAll('mark.leigh-hit').forEach(m => m.replaceWith(...m.childNodes));
+    const m = doc.createElement('mark');
+    m.className = 'leigh-hit';
+    m.style.cssText = 'background: rgba(191,144,0,0.45); color: inherit; border-radius: 2px; padding: 0 1px;';
+    range.surroundContents(m);
+  } catch (e) {
+    try {
+      const range = rendition.getRange(cfi);
+      const sel = range.startContainer.ownerDocument.defaultView.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+    } catch (e2) {}
+  }
+  const loc = rendition.currentLocation();
+  if (loc && loc.start) onRelocated(loc);
+}
+
+document.getElementById('search-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const open = searchPanel.classList.toggle('open');
+  document.getElementById('sidebar').classList.remove('open');
+  if (open) setTimeout(() => searchInput.focus(), 250);
+});
+document.getElementById('search-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  searchInput.blur();                 // closes the phone keyboard
+  runSearch(searchInput.value);
+});
+
 // ---------- Buttons ----------
 document.getElementById('prev').addEventListener('click', prev);
 document.getElementById('next').addEventListener('click', next);
@@ -1021,6 +1238,7 @@ document.getElementById('view-flow').addEventListener('click', () => switchMode(
 document.getElementById('toc-toggle').addEventListener('click', (e) => {
   e.stopPropagation();
   document.getElementById('sidebar').classList.toggle('open');
+  searchPanel.classList.remove('open');
 });
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -1056,6 +1274,9 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('#font-menu') && !e.target.closest('#font-toggle')) {
     fontMenu.classList.remove('open');
   }
+  if (!e.target.closest('#search-panel') && !e.target.closest('#search-toggle')) {
+    searchPanel.classList.remove('open');
+  }
 });
 
 // ---------- Keyboard ----------
@@ -1069,9 +1290,16 @@ function onKey(e) {
   else if (e.key === 'Escape') {
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('font-menu').classList.remove('open');
+    searchPanel.classList.remove('open');
   }
 }
-document.addEventListener('keydown', onKey);
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest && e.target.closest('input')) return;   // typing in search
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+    e.preventDefault(); searchPanel.classList.add('open'); searchInput.focus(); return;
+  }
+  onKey(e);
+});
 
 // ---------- Resize / rotate ----------
 let resizeTimer;
