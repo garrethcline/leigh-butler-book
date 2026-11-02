@@ -890,7 +890,7 @@ async function createRendition(target) {
 
 async function loadBook() {
   try {
-    book = ePub('Leigh_Butler_Book.epub?v=5', { openAs: 'epub' });
+    book = ePub('Leigh_Butler_Book.epub?v=6', { openAs: 'epub' });
     await book.ready;
     await createRendition(localStorage.getItem(STORAGE_KEY));
     buildTOC();
