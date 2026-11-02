@@ -289,6 +289,8 @@ body::after {
   transition: color 0.3s ease;
 }
 
+.download-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+.download-row .sep { color: var(--gold); opacity: 0.6; }
 .download-link:hover {
   color: var(--gold-light);
 }
@@ -400,11 +402,17 @@ body::after {
   </div>
 
   <div class="cta-group">
-    <a class="read-button" href="reader.html?v=3">
+    <a class="read-button" href="reader.html?v=4">
       Begin Reading
       <span class="arrow">→</span>
     </a>
-    <a class="download-link" href="Leigh_Butler_Book.epub" download>or download the EPUB</a>
+    <div class="download-row">
+      <a class="download-link" href="Leigh_Butler_Book.pdf" download>Download PDF</a>
+      <span class="sep">·</span>
+      <a class="download-link" href="text.html">Text view</a>
+      <span class="sep">·</span>
+      <a class="download-link" href="Leigh_Butler_Book.epub" download>EPUB</a>
+    </div>
   </div>
 
   <div class="stats">

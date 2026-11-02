@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Text View · The Leigh Household</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --navy-deep: #0D1B2A;
+  --navy: #1F3864;
+  --gold: #BF9000;
+  --gold-light: #D4AB3A;
+  --cream: #F4F1EA;
+  --paper: #FAF8F3;
+  --ink: #1A1B23;
+  --ink-soft: #4A4D5C;
+  --rule: rgba(0, 0, 0, 0.08);
+
+  /* Reading colors - switched by theme */
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-soft: var(--ink-soft);
+  --chrome-bg: rgba(244, 241, 234, 0.98);
+  --chrome-fg: var(--navy);
+  --chrome-rule: rgba(31, 56, 100, 0.15);
+  --sidebar-bg: var(--cream);
+  --desk: #D9D4C8;
+}
+
+body.theme-dark {
+  --bg: #14171F;
+  --fg: #D9D6CD;
+  --fg-soft: #8B8C95;
+  --chrome-bg: rgba(20, 23, 31, 0.98);
+  --chrome-fg: var(--gold-light);
+  --chrome-rule: rgba(212, 171, 58, 0.2);
+  --sidebar-bg: #1A1D26;
+  --rule: rgba(255, 255, 255, 0.08);
+  --desk: #0A0C11;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* === TOP CHROME === */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--chrome-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--chrome-rule);
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  z-index: 100;
+  gap: 0.5rem;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--chrome-fg);
+  margin-right: auto;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.brand .accent {
+  color: var(--gold);
+  margin: 0 0.4rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--chrome-fg);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--gold);
+  color: #fff;
+}
+
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* === SIDEBAR (TOC) === */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  bottom: 50px;
+  left: 0;
+  width: 320px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--chrome-rule);
+  overflow-y: auto;
+  padding: 1.5rem 1.25rem 2rem;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--chrome-rule);
+}
+
+.toc-list {
+  list-style: none;
+}
+
+.toc-list ul {
+  list-style: none;
+  margin-left: 0.85rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--chrome-rule);
+}
+
+.toc-list a {
+  display: block;
+  padding: 0.45rem 0.5rem;
+  color: var(--fg);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  line-height: 1.35;
+}
+
+.toc-list > li > a {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--chrome-fg);
+  padding: 0.6rem 0.5rem;
+}
+
+.toc-list a:hover {
+  background: rgba(191, 144, 0, 0.12);
+  color: var(--gold);
+}
+
+.toc-list a.current {
+  background: rgba(191, 144, 0, 0.18);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* === MAIN READER AREA === */
+.reader-stage {
+  position: fixed;
+  top: 60px;
+  bottom: 50px;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+
+#viewer {
+  width: 100%;
+  height: 100%;
+}
+
+/* --- Page view: the book laid out like printed pages, scaled to fit --- */
+body.mode-page .reader-stage { background: var(--desk); touch-action: none; }
+.page-scroller {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+}
+body.mode-page .page-scroller.zoomed { overflow: auto; -webkit-overflow-scrolling: touch; }
+body.mode-page .page-scroller { bottom: 58px; }   /* strip for the zoom control */
+.page-sizer {
+  position: relative;
+  margin: auto;            /* centers when smaller than the stage */
+  flex: none;
+}
+.page-frame {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  background: var(--bg);
+}
+body.mode-page .page-frame { box-shadow: 0 4px 24px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06); }
+body.mode-flow .page-frame { position: absolute; inset: 0; width: 100% !important; height: 100% !important; transform: none !important; }
+body.mode-flow .page-sizer { position: absolute; inset: 0; margin: 0; width: 100% !important; height: 100% !important; }
+
+/* Zoom control (page view) */
+.zoombar {
+  position: absolute;
+  bottom: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-rule);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  z-index: 25;
+}
+body.mode-flow .zoombar { display: none; }
+.zoombar button {
+  min-width: 40px; height: 36px;
+  padding: 0 0.6rem;
+  border: none; background: transparent;
+  color: var(--chrome-fg);
+  font-family: 'Inter', sans-serif; font-size: 1.15rem; font-weight: 500;
+  border-radius: 999px; cursor: pointer;
+}
+.zoombar button:hover { background: rgba(191,144,0,0.15); }
+.zoombar .zoom-level { font-size: 0.75rem; letter-spacing: 0.05em; min-width: 58px; }
+
+/* View switch inside the menu */
+.view-switch { display: flex; gap: 0.5rem; }
+.view-switch .font-btn { font-family: 'Inter', sans-serif; font-size: 0.8rem; }
+.view-switch .font-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+body.mode-page .flow-only { display: none !important; }
+
+/* Loading state */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--fg-soft);
+  z-index: 30;
+  transition: opacity 0.4s ease;
+}
+
+.loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  animation: pulseFade 2s ease-in-out infinite;
+}
+
+.loading-text {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+@keyframes pulseFade {
+  0%, 100% { opacity: 0.4; transform: rotate(0deg); }
+  50% { opacity: 1; transform: rotate(180deg); }
+}
+
+/* Page navigation arrows */
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  background: rgba(191, 144, 0, 0.1);
+  border: 1px solid rgba(191, 144, 0, 0.3);
+  color: var(--gold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 20;
+  opacity: 0;
+}
+
+.reader-stage:hover .nav-arrow {
+  opacity: 1;
+}
+
+.nav-arrow:hover {
+  background: var(--gold);
+  color: #fff;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.nav-arrow.prev { left: 12px; }
+body.mode-page .nav-arrow { opacity: 0.85; background: var(--chrome-bg); }
+.nav-arrow.next { right: 12px; }
+
+.nav-arrow svg { width: 20px; height: 20px; }
+
+/* === BOTTOM CHROME === */
+.bottombar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 50px;
+  background: var(--chrome-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--chrome-rule);
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  gap: 1rem;
+  z-index: 100;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.progress {
+  flex: 1;
+  height: 3px;
+  background: var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: var(--gold);
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.progress-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: var(--chrome-fg);
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.chapter-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--chrome-fg);
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* === FONT MENU POPUP === */
+.font-menu {
+  position: fixed;
+  top: 64px;
+  right: 1rem;
+  background: var(--chrome-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--chrome-rule);
+  padding: 1rem;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 200px;
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: all 0.25s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.font-menu.open {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+.font-menu-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: var(--fg-soft);
+  text-transform: uppercase;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--chrome-rule);
+}
+
+.font-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.font-btn {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--chrome-rule);
+  color: var(--chrome-fg);
+  font-family: 'Cormorant Garamond', serif;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.font-btn:hover {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold);
+}
+
+.font-btn.small { font-size: 0.9rem; }
+.font-btn.large { font-size: 1.3rem; }
+
+.font-size-display {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: var(--chrome-fg);
+  font-weight: 500;
+  min-width: 36px;
+  text-align: center;
+}
+
+
+/* === SEARCH PANEL === */
+.search-panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 400px;
+  max-width: 100%;
+  bottom: 50px;
+  background: var(--sidebar-bg);
+  border-left: 1px solid var(--chrome-rule);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 55;
+  box-shadow: -8px 0 30px rgba(0,0,0,0.12);
+}
+.search-panel.open { transform: translateX(0); }
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--chrome-rule);
+}
+.search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;               /* 16px stops iPhones zooming the page on focus */
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--chrome-rule);
+  border-radius: 4px;
+  outline: none;
+}
+.search-input:focus { border-color: var(--gold); }
+.search-go {
+  padding: 0 1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--gold);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.search-status {
+  padding: 0.6rem 1rem;
+  font-size: 0.75rem;
+  color: var(--fg-soft);
+  border-bottom: 1px solid var(--chrome-rule);
+}
+.search-status:empty { display: none; }
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  list-style: none;
+}
+.search-results .group {
+  padding: 0.75rem 1rem 0.35rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gold);
+  position: sticky;
+  top: 0;
+  background: var(--sidebar-bg);
+}
+.search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.search-results button:hover, .search-results button.active { background: rgba(191, 144, 0, 0.12); }
+.search-results mark {
+  background: rgba(191, 144, 0, 0.35);
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+/* === ERROR STATE === */
+.error-state {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: var(--bg);
+  z-index: 40;
+}
+
+.error-state.shown { display: flex; }
+
+.error-mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.error-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  color: var(--fg);
+  margin-bottom: 0.75rem;
+}
+
+.error-text {
+  font-size: 0.9rem;
+  color: var(--fg-soft);
+  max-width: 28rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.error-link {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--gold);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border-radius: 3px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 370px) {
+  .brand em:first-child, .brand .accent { display: none !important; }
+}
+@media (max-width: 720px) {
+  .topbar { padding: 0 0.75rem; height: 56px; }
+  .bottombar { padding: 0 0.75rem; height: 46px; }
+  .reader-stage { top: 56px; bottom: 46px; }
+  .sidebar { top: 56px; bottom: 46px; width: 85%; max-width: 320px; }
+  .brand { font-size: 0.9rem; }
+  .brand .accent { margin: 0 0.3rem; font-size: 0.6em; vertical-align: 0.15em; }
+  .search-panel { top: 56px; bottom: 46px; width: 100%; border-left: none; }
+  .icon-btn { width: 34px; height: 34px; }
+  .topbar { gap: 0.15rem; }
+  .chapter-label { display: none; }
+  .nav-arrow { display: none; }  /* swipe or tap the page edges */
+  .zoombar { bottom: 8px; }
+  .font-menu { right: 0.5rem; left: 0.5rem; }
+  .progress-text { font-size: 0.65rem; min-width: 50px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="icon-btn" id="toc-toggle" aria-label="Table of contents">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+
+  <div class="brand"><em>The Leigh</em><span class="accent">◆</span><em>Household</em></div>
+
+  <button class="icon-btn" id="search-toggle" aria-label="Search the book">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+  </button>
+  <button class="icon-btn" id="font-toggle" aria-label="View and text size">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+  </button>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+  <a class="icon-btn" href="reader.html" aria-label="Page view (PDF)" title="Page view">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+  </a>
+  <a class="icon-btn" href="index.html" aria-label="Back to landing">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  </a>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-title">Contents</div>
+  <nav id="toc"></nav>
+</aside>
+
+<!-- SEARCH -->
+<aside class="search-panel" id="search-panel" aria-label="Search">
+  <form class="search-form" id="search-form" autocomplete="off">
+    <input class="search-input" id="search-input" type="search" placeholder="Search the book" enterkeyhint="search">
+    <button class="search-go" type="submit">Search</button>
+  </form>
+  <div class="search-status" id="search-status"></div>
+  <ul class="search-results" id="search-results"></ul>
+</aside>
+
+<!-- FONT MENU -->
+<div class="font-menu" id="font-menu">
+  <div class="font-menu-label" style="display:none">View</div>
+  <div class="view-switch" style="display:none">
+    <button class="font-btn" id="view-page">Page view</button>
+    <button class="font-btn" id="view-flow">Text view</button>
+  </div>
+  <div class="font-menu-label">Text Size</div>
+  <div class="font-controls flow-only">
+    <button class="font-btn small" id="font-down">A</button>
+    <span class="font-size-display" id="font-size-display">100%</span>
+    <button class="font-btn large" id="font-up">A</button>
+  </div>
+</div>
+
+<!-- READER -->
+<main class="reader-stage">
+  <div class="loading" id="loading">
+    <div class="loading-mark">◆</div>
+    <div class="loading-text">Opening the Book…</div>
+  </div>
+
+  <div class="error-state" id="error">
+    <div class="error-mark">◆</div>
+    <div class="error-title">Unable to load the book</div>
+    <div class="error-text" id="error-text">
+      Please try refreshing the page, or download the EPUB directly to read in your preferred application.
+    </div>
+    <a class="error-link" href="Leigh_Butler_Book.epub" download>Download EPUB</a>
+  </div>
+
+  <button class="nav-arrow prev" id="prev" aria-label="Previous page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="page-scroller" id="scroller">
+    <div class="page-sizer" id="sizer">
+      <div class="page-frame" id="frame"><div id="viewer"></div></div>
+    </div>
+  </div>
+  <div class="zoombar" id="zoombar">
+    <button id="zoom-out" aria-label="Zoom out">&minus;</button>
+    <button class="zoom-level" id="zoom-fit" aria-label="Fit page to screen">Fit</button>
+    <button id="zoom-in" aria-label="Zoom in">+</button>
+  </div>
+  <button class="nav-arrow next" id="next" aria-label="Next page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+</main>
+
+<!-- BOTTOM BAR -->
+<footer class="bottombar">
+  <span class="chapter-label" id="chapter-label">&nbsp;</span>
+  <div class="progress">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <span class="progress-text" id="progress-text">0%</span>
+</footer>
+
+<!-- DEPENDENCIES -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+
+<script>
+const STORAGE_KEY = 'leigh-book-position';
+const FONT_SIZE_KEY = 'leigh-book-fontsize';
+const THEME_KEY = 'leigh-book-theme';
+
+let book, rendition, currentFontSize, currentTheme;
+const MODE_KEY = 'leigh-book-mode';
+let mode = 'flow';   // this page is the flowing-text view; the PDF view is reader.html
+
+// Printed book page: US Letter (8.5 x 11 in) at 96 px per inch
+const PAGE_W = 816, PAGE_H = 1056, PAGE_GAP = 120;   // 0.625 in side margins
+let twoUp = false;      // two-page spread on wide screens
+let fitScale = 1;       // scale that fits the whole page(s) on screen
+let zoom = 1;           // multiplier on top of fit (1 = fit)
+const ZOOM_MIN = 1, ZOOM_MAX = 5;
+
+const stage = document.querySelector('.reader-stage');
+const scroller = document.getElementById('scroller');
+const sizer = document.getElementById('sizer');
+const frame = document.getElementById('frame');
+
+// Initialize theme from storage
+function initTheme() {
+  currentTheme = localStorage.getItem(THEME_KEY) || 'light';
+  document.body.classList.toggle('theme-dark', currentTheme === 'dark');
+}
+initTheme();
+currentFontSize = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '100');
+
+function setModeClass() {
+  document.body.classList.toggle('mode-page', mode === 'page');
+  document.body.classList.toggle('mode-flow', mode === 'flow');
+  document.getElementById('view-page').classList.toggle('active', mode === 'page');
+  document.getElementById('view-flow').classList.toggle('active', mode === 'flow');
+}
+setModeClass();
+
+// ---------- Page geometry ----------
+function pageSize() {
+  return { w: twoUp ? PAGE_W * 2 : PAGE_W, h: PAGE_H };
+}
+
+function computeLayout() {
+  const sw = scroller.clientWidth, sh = scroller.clientHeight;
+  const pad = sw < 720 ? 8 : 24;
+  // Two pages side by side only when that still leaves them readable
+  const twoFit = Math.min((sw - pad * 2) / (PAGE_W * 2), (sh - pad * 2) / PAGE_H);
+  twoUp = sw >= 1100 && twoFit >= 0.5;
+  const p = pageSize();
+  fitScale = Math.min((sw - pad * 2) / p.w, (sh - pad * 2) / p.h);
+}
+
+function applyZoom(anchorX, anchorY) {
+  if (mode !== 'page') return;
+  const p = pageSize();
+  const oldW = sizer.offsetWidth || 1, oldH = sizer.offsetHeight || 1;
+  // keep the point under the finger/cursor in place while zooming
+  const ax = anchorX ?? scroller.clientWidth / 2, ay = anchorY ?? scroller.clientHeight / 2;
+  const relX = (scroller.scrollLeft + ax - sizer.offsetLeft) / oldW;
+  const relY = (scroller.scrollTop + ay - sizer.offsetTop) / oldH;
+
+  const s = fitScale * zoom;
+  frame.style.width = p.w + 'px';
+  frame.style.height = p.h + 'px';
+  frame.style.transform = `scale(${s})`;
+  sizer.style.width = Math.round(p.w * s) + 'px';
+  sizer.style.height = Math.round(p.h * s) + 'px';
+  scroller.classList.toggle('zoomed', zoom > 1.001);
+
+  if (zoom > 1.001) {
+    scroller.scrollLeft = relX * sizer.offsetWidth + sizer.offsetLeft - ax;
+    scroller.scrollTop = relY * sizer.offsetHeight + sizer.offsetTop - ay;
+  } else {
+    scroller.scrollLeft = 0; scroller.scrollTop = 0;
+  }
+  const btn = document.getElementById('zoom-fit');
+  btn.textContent = zoom > 1.001 ? Math.round(s * 100) + '%' : 'Fit';
+}
+
+function setZoom(z, ax, ay) {
+  zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+  applyZoom(ax, ay);
+}
+
+// epub.js works out pages and locations from on-screen sizes. Page view scales
+// the page with a CSS transform, so report sizes inside the page frame as if
+// unscaled; otherwise progress, saved position and contents links drift.
+const _gbcr = Element.prototype.getBoundingClientRect;
+Element.prototype.getBoundingClientRect = function () {
+  const r = _gbcr.call(this);
+  if (mode !== 'page' || this === frame || !frame.contains(this)) return r;
+  const k = fitScale * zoom;
+  if (Math.abs(k - 1) < 1e-6) return r;
+  const o = _gbcr.call(frame);
+  return new DOMRect(o.left + (r.left - o.left) / k, o.top + (r.top - o.top) / k, r.width / k, r.height / k);
+};
+
+// ---------- Rendition ----------
+async function createRendition(target) {
+  if (rendition) { rendition.destroy(); rendition = null; }
+  document.getElementById('viewer').innerHTML = '';
+
+  if (mode === 'page') {
+    computeLayout();
+    const p = pageSize();
+    frame.style.width = p.w + 'px';
+    frame.style.height = p.h + 'px';
+    rendition = book.renderTo('viewer', {
+      width: p.w, height: p.h,
+      flow: 'paginated',
+      spread: twoUp ? 'always' : 'none',
+      gap: PAGE_GAP,
+      allowScriptedContent: true,
+    });
+    applyZoom();
+  } else {
+    frame.style.width = ''; frame.style.height = ''; frame.style.transform = '';
+    rendition = book.renderTo('viewer', {
+      width: '100%', height: '100%',
+      flow: 'paginated', spread: 'auto', minSpreadWidth: 900,
+      allowScriptedContent: true,
+    });
+  }
+
+  // Print-like page margins and steady layout in page view
+  rendition.themes.default({
+    'img': { 'max-width': '100% !important', 'height': 'auto' },
+    'table': { 'max-width': '100%' },
+  });
+  if (mode === 'page') {
+    rendition.themes.override('font-size', '100%');
+    rendition.themes.default({
+      'body': { 'padding-top': '56px !important', 'padding-bottom': '56px !important', 'font-size': '17px' },
+      'html': { 'touch-action': 'none' },
+    });
+  } else {
+    applyFontSize();
+  }
+  applyTheme();
+
+  rendition.hooks.content.register(attachTouch);
+  rendition.on('relocated', onRelocated);
+  rendition.on('rendered', updateChapterLabel);
+  rendition.on('keyup', onKey);
+
+  await rendition.display(target || undefined);
+}
+
+async function loadBook() {
+  try {
+    book = ePub('Leigh_Butler_Book.epub?v=3', { openAs: 'epub' });
+    await book.ready;
+    await createRendition(localStorage.getItem(STORAGE_KEY));
+    buildTOC();
+    document.getElementById('loading').classList.add('hidden');
+  } catch (err) {
+    console.error('Failed to load book:', err);
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error').classList.add('shown');
+    document.getElementById('error-text').textContent =
+      'Error: ' + (err.message || 'Could not load the EPUB file. Try downloading it directly.');
+  }
+}
+
+function currentCfi() {
+  const loc = rendition && rendition.currentLocation();
+  return loc && loc.start ? loc.start.cfi : localStorage.getItem(STORAGE_KEY);
+}
+
+async function switchMode(newMode) {
+  if (newMode === mode) return;
+  const cfi = currentCfi();
+  mode = newMode;
+  localStorage.setItem(MODE_KEY, mode);
+  zoom = 1;
+  setModeClass();
+  await createRendition(cfi);
+  const loc = rendition.currentLocation();
+  if (loc) onRelocated(loc);
+}
+
+function applyTheme() {
+  if (!rendition) return;
+  const isDark = currentTheme === 'dark';
+  rendition.themes.override('color', isDark ? '#D9D6CD' : '#1A1B23');
+  rendition.themes.override('background', isDark ? '#14171F' : '#FAF8F3');
+  rendition.getContents().forEach(c => {
+    c.document.documentElement.style.background = isDark ? '#14171F' : '#FAF8F3';
+    c.document.body.style.color = isDark ? '#D9D6CD' : '#1A1B23';
+  });
+}
+
+function applyFontSize() {
+  document.getElementById('font-size-display').textContent = currentFontSize + '%';
+  if (!rendition || mode !== 'flow') return;
+  rendition.themes.fontSize(currentFontSize + '%');
+}
+
+function buildTOC() {
+  const tocNav = document.getElementById('toc');
+  const toc = book.navigation.toc;
+
+  function renderItems(items, depth = 0) {
+    if (!items || items.length === 0) return '';
+    const ul = document.createElement('ul');
+    if (depth === 0) ul.className = 'toc-list';
+    items.forEach(item => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#';
+      a.textContent = item.label.trim();
+      a.dataset.href = item.href;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        rendition.display(item.href);
+        if (window.innerWidth < 720) {
+          document.getElementById('sidebar').classList.remove('open');
+        }
+      });
+      li.appendChild(a);
+      if (item.subitems && item.subitems.length) {
+        const subUl = renderItems(item.subitems, depth + 1);
+        if (subUl) li.appendChild(subUl);
+      }
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  tocNav.innerHTML = '';
+  tocNav.appendChild(renderItems(toc));
+}
+
+function updateChapterLabel() {
+  if (!rendition || !book.navigation) return;
+  const location = rendition.currentLocation();
+  if (!location || !location.start) return;
+  const item = book.spine.get(location.start.href);
+  if (item) {
+    const navItem = book.navigation.get(item.href);
+    if (navItem) {
+      document.getElementById('chapter-label').textContent = navItem.label.trim();
+      document.querySelectorAll('.toc-list a').forEach(a => a.classList.remove('current'));
+      const currentLink = document.querySelector(`.toc-list a[data-href="${item.href}"]`);
+      if (currentLink) currentLink.classList.add('current');
+    }
+  }
+}
+
+function onRelocated(location) {
+  if (location && location.start) {
+    localStorage.setItem(STORAGE_KEY, location.start.cfi);
+  }
+  updateChapterLabel();
+  if (location && book.locations && book.locations.length()) {
+    const percent = book.locations.percentageFromCfi(location.start.cfi);
+    const pct = Math.round(percent * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = pct + '%';
+  }
+}
+
+async function generateLocations() {
+  if (!book) return;
+  await book.ready;
+  await book.locations.generate(1000);
+  const loc = rendition.currentLocation();
+  if (loc) onRelocated(loc);
+}
+
+// ---------- Page turning ----------
+// After each turn, ask epub.js to re-report the location so progress and the
+// saved reading position stay in step with what is on screen.
+function turn(dir) {
+  if (!rendition) return;
+  const p = dir > 0 ? rendition.next() : rendition.prev();
+  Promise.resolve(p).then(() => setTimeout(() => {
+    const loc = rendition.currentLocation();
+    if (loc && loc.start) onRelocated(loc);
+  }, 60));
+  if (mode === 'page' && zoom > 1.001) scroller.scrollTop = 0;
+}
+function next() { turn(1); }
+function prev() { turn(-1); }
+
+// ---------- Touch: swipe, tap edges, double-tap, pinch, pan ----------
+// Touches inside the book land in the epub iframe, so listeners are attached
+// there (coordinates converted to screen space) as well as on the stage.
+let t = null, lastTap = 0, tapTimer = null;
+
+function scaleNow() { return mode === 'page' ? fitScale * zoom : 1; }
+
+function handleStart(pts) {
+  if (pts.length === 2) {
+    t = { pinch: true, d0: dist(pts), z0: zoom, mid: mid(pts) };
+  } else if (pts.length === 1) {
+    t = { pinch: false, x0: pts[0].x, y0: pts[0].y, x: pts[0].x, y: pts[0].y,
+          sl: scroller.scrollLeft, st: scroller.scrollTop, time: Date.now() };
+  }
+}
+function handleMove(pts, ev) {
+  if (!t) return;
+  if (t.pinch && pts.length === 2 && mode === 'page') {
+    ev.preventDefault();
+    const r = scroller.getBoundingClientRect();
+    setZoom(t.z0 * dist(pts) / t.d0, t.mid.x - r.left, t.mid.y - r.top);
+  } else if (!t.pinch && pts.length === 1) {
+    t.x = pts[0].x; t.y = pts[0].y;
+    if (mode === 'page' && zoom > 1.001) {          // pan the zoomed page
+      ev.preventDefault();
+      scroller.scrollLeft = t.sl - (t.x - t.x0);
+      scroller.scrollTop = t.st - (t.y - t.y0);
+    }
+  }
+}
+function handleEnd(pts) {
+  if (!t) return;
+  const s = t; t = null;
+  if (s.pinch) return;
+  const dx = s.x - s.x0, dy = s.y - s.y0;
+  const zoomedIn = mode === 'page' && zoom > 1.001;
+
+  // Swipe to turn pages (when not zoomed in)
+  if (!zoomedIn && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+    dx > 0 ? prev() : next();
+    return;
+  }
+  // Tap / double-tap
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && Date.now() - s.time < 300) {
+    const now = Date.now();
+    if (mode === 'page' && now - lastTap < 300) {        // double-tap: toggle zoom
+      clearTimeout(tapTimer); lastTap = 0;
+      const r = scroller.getBoundingClientRect();
+      setZoom(zoomedIn ? 1 : 2.2, s.x - r.left, s.y - r.top);
+      return;
+    }
+    lastTap = now;
+    if (zoomedIn) return;
+    const w = stage.clientWidth, rx = s.x - stage.getBoundingClientRect().left;
+    tapTimer = setTimeout(() => {                         // tap page edges to turn
+      if (rx < w * 0.22) prev();
+      else if (rx > w * 0.78) next();
+    }, mode === 'page' ? 300 : 0);
+  }
+}
+const dist = p => Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+const mid = p => ({ x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 });
+
+// Points from the stage (already screen coordinates)
+const stagePts = e => Array.from(e.touches.length ? e.touches : e.changedTouches)
+  .map(p => ({ x: p.clientX, y: p.clientY }));
+stage.addEventListener('touchstart', e => { if (!e.target.closest('.zoombar,.nav-arrow')) handleStart(stagePts(e)); }, { passive: true });
+stage.addEventListener('touchmove', e => handleMove(stagePts(e), e), { passive: false });
+stage.addEventListener('touchend', e => handleEnd(stagePts(e)), { passive: true });
+
+// Points from inside the epub iframe: convert iframe coords to screen coords
+function attachTouch(contents) {
+  const doc = contents.document;
+  const win = contents.window;
+  // epub.js lays every page of a chapter in one wide strip and shifts it, so map
+  // touches against the visible page box rather than the iframe itself.
+  const toScreen = e => {
+    const r = frame.getBoundingClientRect();
+    const W = frame.offsetWidth || 1;
+    const k = r.width / W || 1;                       // CSS scale applied to the page
+    return Array.from(e.touches.length ? e.touches : e.changedTouches)
+      .map(p => ({ x: r.left + (((p.clientX % W) + W) % W) * k, y: r.top + p.clientY * k }));
+  };
+  doc.addEventListener('touchstart', e => handleStart(toScreen(e)), { passive: true });
+  doc.addEventListener('touchmove', e => handleMove(toScreen(e), e), { passive: false });
+  doc.addEventListener('touchend', e => handleEnd(toScreen(e)), { passive: true });
+  doc.addEventListener('gesturestart', e => e.preventDefault());
+  // Ctrl/Cmd + wheel (and trackpad pinch) zooms the page on desktop
+  doc.addEventListener('wheel', e => {
+    if (mode === 'page' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      const r = scroller.getBoundingClientRect();
+      const pt = toScreen({ touches: [], changedTouches: [e] })[0];
+      setZoom(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), pt.x - r.left, pt.y - r.top);
+    }
+  }, { passive: false });
+}
+document.addEventListener('gesturestart', e => e.preventDefault());
+stage.addEventListener('wheel', e => {
+  if (mode === 'page' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    const r = scroller.getBoundingClientRect();
+    setZoom(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX - r.left, e.clientY - r.top);
+  }
+}, { passive: false });
+
+
+// ---------- Search ----------
+const searchPanel = document.getElementById('search-panel');
+const searchInput = document.getElementById('search-input');
+const searchStatus = document.getElementById('search-status');
+const searchResults = document.getElementById('search-results');
+let searchRun = 0;
+
+function chapterName(item) {
+  // Label of the top-level contents entry that owns this section
+  const base = item.href.split('#')[0];
+  const hit = (book.navigation.toc || []).find(t => t.href.split('#')[0] === base);
+  return hit ? hit.label.trim() : (item.idref || base);
+}
+
+const escapeHtml = str => str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function markTerm(excerpt, q) {
+  const safe = escapeHtml(excerpt);
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/&/g, '&amp;'), 'gi');
+  return safe.replace(re, m => `<mark>${m}</mark>`);
+}
+
+async function runSearch(q) {
+  q = q.trim();
+  const run = ++searchRun;
+  searchResults.innerHTML = '';
+  if (q.length < 2) { searchStatus.textContent = 'Type at least two letters.'; return; }
+  searchStatus.textContent = 'Searching…';
+  let total = 0;
+  for (const item of book.spine.spineItems) {
+    if (run !== searchRun) return;                 // a newer search started
+    let found = [];
+    try {
+      await item.load(book.load.bind(book));
+      found = item.find(q) || [];
+    } catch (e) { console.warn('search skipped', item.href, e); }
+    finally { try { item.unload(); } catch (e) {} }
+    if (run !== searchRun) return;
+    if (!found.length) continue;
+    total += found.length;
+    const head = document.createElement('li');
+    head.className = 'group';
+    head.textContent = `${chapterName(item)} (${found.length})`;
+    searchResults.appendChild(head);
+    found.slice(0, 150).forEach(r => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      const ex = r.excerpt.trim().replace(/^[.…\s]+|[.…\s]+$/g, '');
+      btn.innerHTML = '…' + markTerm(ex, q) + '…';
+      btn.addEventListener('click', () => goToResult(r.cfi, btn));
+      li.appendChild(btn);
+      searchResults.appendChild(li);
+    });
+    searchStatus.textContent = `${total} match${total === 1 ? '' : 'es'} so far…`;
+  }
+  if (run !== searchRun) return;
+  searchStatus.textContent = total ? `${total} match${total === 1 ? '' : 'es'} for “${q}”` : `No matches for “${q}”`;
+}
+
+async function goToResult(cfi, btn) {
+  searchResults.querySelectorAll('button.active').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (window.innerWidth < 720) searchPanel.classList.remove('open');
+  if (mode === 'page') setZoom(1);
+  await rendition.display(cfi);
+  // Mark the match in gold so it stands out on the page
+  try {
+    const range = rendition.getRange(cfi);
+    const doc = range.startContainer.ownerDocument;
+    doc.querySelectorAll('mark.leigh-hit').forEach(m => m.replaceWith(...m.childNodes));
+    const m = doc.createElement('mark');
+    m.className = 'leigh-hit';
+    m.style.cssText = 'background: rgba(191,144,0,0.45); color: inherit; border-radius: 2px; padding: 0 1px;';
+    range.surroundContents(m);
+  } catch (e) {
+    try {
+      const range = rendition.getRange(cfi);
+      const sel = range.startContainer.ownerDocument.defaultView.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+    } catch (e2) {}
+  }
+  const loc = rendition.currentLocation();
+  if (loc && loc.start) onRelocated(loc);
+}
+
+document.getElementById('search-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const open = searchPanel.classList.toggle('open');
+  document.getElementById('sidebar').classList.remove('open');
+  if (open) setTimeout(() => searchInput.focus(), 250);
+});
+document.getElementById('search-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  searchInput.blur();                 // closes the phone keyboard
+  runSearch(searchInput.value);
+});
+
+// ---------- Buttons ----------
+document.getElementById('prev').addEventListener('click', prev);
+document.getElementById('next').addEventListener('click', next);
+document.getElementById('zoom-in').addEventListener('click', () => setZoom(zoom * 1.25));
+document.getElementById('zoom-out').addEventListener('click', () => setZoom(zoom / 1.25));
+document.getElementById('zoom-fit').addEventListener('click', () => setZoom(1));
+document.getElementById('view-page').addEventListener('click', () => switchMode('page'));
+document.getElementById('view-flow').addEventListener('click', () => switchMode('flow'));
+
+document.getElementById('toc-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('sidebar').classList.toggle('open');
+  searchPanel.classList.remove('open');
+});
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.body.classList.toggle('theme-dark', currentTheme === 'dark');
+  localStorage.setItem(THEME_KEY, currentTheme);
+  applyTheme();
+});
+
+document.getElementById('font-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('font-menu').classList.toggle('open');
+});
+
+document.getElementById('font-up').addEventListener('click', () => {
+  currentFontSize = Math.min(200, currentFontSize + 10);
+  localStorage.setItem(FONT_SIZE_KEY, currentFontSize);
+  applyFontSize();
+});
+
+document.getElementById('font-down').addEventListener('click', () => {
+  currentFontSize = Math.max(70, currentFontSize - 10);
+  localStorage.setItem(FONT_SIZE_KEY, currentFontSize);
+  applyFontSize();
+});
+
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  const fontMenu = document.getElementById('font-menu');
+  if (!e.target.closest('#sidebar') && !e.target.closest('#toc-toggle')) {
+    sidebar.classList.remove('open');
+  }
+  if (!e.target.closest('#font-menu') && !e.target.closest('#font-toggle')) {
+    fontMenu.classList.remove('open');
+  }
+  if (!e.target.closest('#search-panel') && !e.target.closest('#search-toggle')) {
+    searchPanel.classList.remove('open');
+  }
+});
+
+// ---------- Keyboard ----------
+function onKey(e) {
+  if (!rendition) return;
+  if (e.key === 'ArrowLeft') { prev(); e.preventDefault && e.preventDefault(); }
+  else if (e.key === 'ArrowRight') { next(); e.preventDefault && e.preventDefault(); }
+  else if (mode === 'page' && (e.key === '+' || e.key === '=')) setZoom(zoom * 1.25);
+  else if (mode === 'page' && (e.key === '-' || e.key === '_')) setZoom(zoom / 1.25);
+  else if (mode === 'page' && e.key === '0') setZoom(1);
+  else if (e.key === 'Escape') {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('font-menu').classList.remove('open');
+    searchPanel.classList.remove('open');
+  }
+}
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest && e.target.closest('input')) return;   // typing in search
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+    e.preventDefault(); searchPanel.classList.add('open'); searchInput.focus(); return;
+  }
+  onKey(e);
+});
+
+// ---------- Resize / rotate ----------
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(async () => {
+    if (!rendition || mode !== 'page') return;
+    const wasTwoUp = twoUp;
+    computeLayout();
+    if (twoUp !== wasTwoUp) { await createRendition(currentCfi()); }
+    else applyZoom();
+  }, 200);
+});
+
+// === GO ===
+loadBook().then(() => {
+  setTimeout(generateLocations, 500);
+});
+</script>
+
+</body>
+</html>
